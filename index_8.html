@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>治理長工作管理</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+.lock-screen{position:fixed;inset:0;background:#F7F6F3;z-index:9999;display:flex;align-items:center;justify-content:center}
+.lock-box{background:#fff;border:0.5px solid #E2E0DA;border-radius:14px;padding:32px 28px;width:300px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.lock-box h2{font-size:18px;font-weight:600;margin-bottom:6px;color:#1A1A18}
+.lock-box p{font-size:13px;color:#6B6B65;margin-bottom:20px}
+.lock-box input{width:100%;padding:10px 12px;border:0.5px solid #E2E0DA;border-radius:8px;font-size:22px;text-align:center;letter-spacing:8px;background:#F7F6F3;color:#1A1A18;font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box}
+.lock-box button{width:100%;padding:10px;border-radius:8px;background:#1A1A18;color:#fff;border:none;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
+.lock-error{font-size:12px;color:#791F1F;margin-top:8px;min-height:16px}
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F3;--surface:#FFFFFF;--surface2:#F0EEE9;
+  --text:#1A1A18;--text2:#6B6B65;--text3:#A0A099;
+  --border:#E2E0DA;--border2:#CACCC7;
+  --cat1-bg:#EEEDFE;--cat1-c:#3C3489;
+  --cat2-bg:#E1F5EE;--cat2-c:#0F6E56;
+  --cat3-bg:#FFF3DC;--cat3-c:#854F0B;
+  --cat4-bg:#F1EFE8;--cat4-c:#5F5E5A;
+  --pri-h-bg:#FCEBEB;--pri-h-c:#791F1F;
+  --pri-m-bg:#FFF3DC;--pri-m-c:#854F0B;
+  --pri-l-bg:#EAF3DE;--pri-l-c:#27500A;
+  --accent:#1A1A18;--radius:10px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#131312;--surface:#1E1E1C;--surface2:#272725;
+    --text:#F0EEE9;--text2:#A0A099;--text3:#6B6B65;
+    --border:#2E2E2B;--border2:#3A3A37;
+    --cat1-bg:#26215C;--cat1-c:#AFA9EC;
+    --cat2-bg:#04342C;--cat2-c:#5DCAA5;
+    --cat3-bg:#412402;--cat3-c:#FAC775;
+    --cat4-bg:#2C2C2A;--cat4-c:#B4B2A9;
+    --pri-h-bg:#501313;--pri-h-c:#F09595;
+    --pri-m-bg:#412402;--pri-m-c:#FAC775;
+    --pri-l-bg:#173404;--pri-l-c:#97C459;
+    --accent:#F0EEE9;
+  }
+}
+body{font-family:'Helvetica Neue',Arial,'Microsoft JhengHei','微軟正黑體',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+.app{max-width:700px;margin:0 auto;padding:20px 16px 60px}
+.header{margin-bottom:20px}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:20px;font-weight:600;letter-spacing:-.02em}
+.header-date{font-size:12px;color:var(--text3);margin-top:3px}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 14px;min-width:72px;text-align:center}
+.stat-n{font-size:22px;font-weight:600;line-height:1.1}
+.stat-l{font-size:11px;color:var(--text2);margin-top:2px}
+.tabs{display:flex;gap:0;border-bottom:0.5px solid var(--border);margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:9px 16px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:color .15s}
+.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500}
+.add-section{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px}
+.add-row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.add-row input[type=text]{flex:1;min-width:180px;padding:9px 12px;border:0.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg);color:var(--text);font-family:inherit;outline:none}
+.add-row input[type=text]:focus{border-color:var(--border2)}
+.add-row2{display:flex;gap:8px;flex-wrap:wrap}
+select{padding:8px 10px;border:0.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit;outline:none;cursor:pointer}
+select:focus{border-color:var(--border2)}
+.btn{padding:9px 16px;border:0.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;cursor:pointer;white-space:nowrap;transition:background .12s}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.btn-primary:hover{opacity:.88}
+.filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;overflow-x:auto;padding-bottom:2px}
+.fb{padding:5px 13px;border:0.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text2);font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+.fb.active{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.tasks{display:flex;flex-direction:column;gap:5px}
+.task{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);transition:opacity .2s}
+.task.done-item{opacity:.55}
+.chk{width:20px;height:20px;min-width:20px;border-radius:50%;border:1.5px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;background:none;transition:all .15s;font-size:11px;color:transparent}
+.chk.checked{background:var(--pri-l-bg);border-color:var(--pri-l-c);color:var(--pri-l-c)}
+.tbody{flex:1;min-width:0}
+.ttitle{font-size:14px;color:var(--text);line-height:1.45;word-break:break-word}
+.task.done-item .ttitle{color:var(--text2)}
+.tmeta{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;align-items:center}
+.tag{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;white-space:nowrap}
+.cat1{background:var(--cat1-bg);color:var(--cat1-c)}
+.cat2{background:var(--cat2-bg);color:var(--cat2-c)}
+.cat3{background:var(--cat3-bg);color:var(--cat3-c)}
+.cat4{background:var(--cat4-bg);color:var(--cat4-c)}
+.ph{background:var(--pri-h-bg);color:var(--pri-h-c)}
+.pm{background:var(--pri-m-bg);color:var(--pri-m-c)}
+.pl{background:var(--pri-l-bg);color:var(--pri-l-c)}
+.tdate{font-size:11px;color:var(--text3)}
+.tnote{font-size:11px;color:var(--text3);font-style:italic}
+.tact{display:flex;gap:2px;opacity:0;transition:opacity .15s;margin-left:auto}
+.task:hover .tact{opacity:1}
+@media(hover:none){.tact{opacity:1}}
+.iBtn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:3px 5px;border-radius:6px;transition:color .12s;font-family:inherit}
+.iBtn:hover{color:var(--text);background:var(--surface2)}
+.empty{text-align:center;color:var(--text3);font-size:13px;padding:36px 0}
+.section-head{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin:16px 0 8px}
+.prog-wrap{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+.prog-item{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px}
+.prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.prog-name{font-size:14px;font-weight:500}
+.prog-pct{font-size:13px;color:var(--text2)}
+.pbar{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden}
+.pfill{height:100%;border-radius:3px;transition:width .4s ease}
+.prog-detail{font-size:12px;color:var(--text3);margin-top:6px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;padding:20px;width:100%;max-width:360px;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:14px}
+.modal label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;margin-top:12px}
+.modal label:first-of-type{margin-top:0}
+.modal input[type=text],.modal input[type=date],.modal select,.modal textarea{width:100%;padding:8px 10px;border:0.5px solid var(--border);border-radius:8px;font-size:14px;background:var(--bg);color:var(--text);font-family:inherit;outline:none}
+.modal textarea{height:70px;resize:vertical}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--border2)}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.del-btn{color:var(--pri-h-c)!important;border-color:var(--pri-h-bg)!important;margin-right:auto}
+.tact-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.act-tag{font-size:12px;padding:4px 11px;border-radius:20px;border:0.5px solid var(--border);background:var(--surface2);color:var(--text2);font-family:inherit;cursor:pointer;transition:all .12s}
+.act-done{border-color:var(--pri-l-c);color:var(--pri-l-c);background:var(--pri-l-bg)}
+.act-done:hover{background:var(--pri-l-c);color:#fff}
+.act-edit:hover{background:var(--surface);color:var(--text);border-color:var(--border2)}
+.act-del{border-color:var(--pri-h-bg);color:var(--pri-h-c);background:var(--pri-h-bg)}
+.act-del:hover{background:var(--pri-h-c);color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <h1>治理長工作管理</h1>
+        <div class="header-date" id="hdate"></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-n" id="s-todo">0</div><div class="stat-l">待辦</div></div>
+        <div class="stat"><div class="stat-n" id="s-done">0</div><div class="stat-l">已完成</div></div>
+        <div class="stat"><div class="stat-n" id="s-rate">0%</div><div class="stat-l">完成率</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('todo')">待辦事項</button>
+    <button class="tab" onclick="switchTab('done')">已完成</button>
+    <button class="tab" onclick="switchTab('progress')">專案進展</button>
+  </div>
+
+  <div id="tab-todo">
+    <div class="add-section">
+      <div class="add-row">
+        <input type="text" id="new-task" placeholder="輸入新待辦事項..." onkeydown="if(event.key==='Enter')addTask()"/>
+      </div>
+      <div class="add-row2">
+        <select id="new-cat">
+          <option value="1">組織治理</option>
+          <option value="2">主管招募</option>
+          <option value="3">策略專案</option>
+          <option value="4">其他事項</option>
+        </select>
+        <select id="new-pri">
+          <option value="high">高優先</option>
+          <option value="med">中優先</option>
+          <option value="low">低優先</option>
+        </select>
+        <button class="btn btn-primary" onclick="addTask()">＋ 新增</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+  <div class="filters" id="todo-filter" style="margin-bottom:0;flex:1"></div>
+  <select id="sort-select" onchange="renderTodo()" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text2);font-family:inherit;cursor:pointer">
+    <option value="pri">依優先度排序</option>
+    <option value="due">依截止日排序</option>
+    <option value="created">依建立時間排序</option>
+  </select>
+</div>
+    <div class="tasks" id="todo-list"></div>
+  </div>
+
+  <div id="tab-done" style="display:none">
+    <div class="filters" id="done-filter"></div>
+    <div class="tasks" id="done-list"></div>
+  </div>
+
+  <div id="tab-progress" style="display:none">
+    <div class="prog-wrap" id="prog-bars"></div>
+    <div class="section-head">近期完成記錄</div>
+    <div class="tasks" id="prog-recent"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h3>編輯事項</h3>
+    <label>事項名稱</label>
+    <input type="text" id="e-title"/>
+    <label>備註</label>
+    <textarea id="e-note" placeholder="補充說明、相關連結..."></textarea>
+    <label>截止日期</label>
+    <input type="date" id="e-due"/>
+    <label>分類</label>
+    <select id="e-cat">
+      <option value="1">組織治理</option>
+      <option value="2">主管招募</option>
+      <option value="3">策略專案</option>
+      <option value="4">其他事項</option>
+    </select>
+    <label>優先度</label>
+    <select id="e-pri">
+      <option value="high">高優先</option>
+      <option value="med">中優先</option>
+      <option value="low">低優先</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn del-btn" onclick="deleteTask()">刪除</button>
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEdit()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const _SB_URL='https://ackiccmveetozvsxdgds.supabase.co';
+const _SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFja2ljY212ZWV0b3p2c3hkZ2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY1NTQsImV4cCI6MjA5NzM1MjU1NH0.eYcFO-efp6NjXSSiFx7PbtQtZyQ45kIdGW1hdKSiyPc';
+const sb=window.supabase?window.supabase.createClient(_SB_URL,_SB_KEY):null;
+
+// Password
+const PWD='1225';
+function unlock(){
+  var v=document.getElementById('lock-input').value;
+  if(v===PWD){
+    sessionStorage.setItem('unlocked','1');
+    document.getElementById('lock-screen').style.display='none';
+  }else{
+    document.getElementById('lock-error').textContent='密碼錯誤，請再試一次';
+    document.getElementById('lock-input').value='';
+  }
+}
+
+const CATS={1:{n:'組織治理',cls:'cat1',color:'#534AB7'},2:{n:'主管招募',cls:'cat2',color:'#1D9E75'},3:{n:'策略專案',cls:'cat3',color:'#BA7517'},4:{n:'其他事項',cls:'cat4',color:'#888780'}};
+const PRIS={high:{l:'高',cls:'ph'},med:{l:'中',cls:'pm'},low:{l:'低',cls:'pl'}};
+const PRI_ORDER={high:0,med:1,low:2};
+let tasks=[];let editId=null;let tf=0;let df=0;let activeTab='todo';
+const KEY='gov_tasks_v1';
+
+function load(){
+  if(window.electronStorage){
+    window.electronStorage.load().then(d=>{
+      try{if(d)tasks=JSON.parse(d);}catch(e){tasks=[];}
+      initDefault();render();
+    });
+    return;
+  }
+  try{const d=localStorage.getItem(KEY);if(d)tasks=JSON.parse(d);}catch(e){tasks=[];}
+  initDefault();render();
+}
+function initDefault(){
+  if(!tasks.length){tasks=[
+    {id:1,title:'籌備Q3董事會議程',cat:1,pri:'high',done:false,note:'',due:'',created:Date.now()-86400000*3},
+    {id:2,title:'審閱法遵政策更新草案',cat:1,pri:'med',done:false,note:'',due:'',created:Date.now()-86400000*2},
+    {id:3,title:'副總經理候選人二面',cat:2,pri:'high',done:false,note:'',due:'',created:Date.now()-86400000},
+    {id:4,title:'確認獵頭公司合約條款',cat:2,pri:'med',done:false,note:'',due:'',created:Date.now()},
+    {id:5,title:'國際醫療平台提案簡報',cat:3,pri:'high',done:false,note:'',due:'',created:Date.now()},
+    {id:6,title:'SNQ認證資料整理',cat:3,pri:'med',done:true,note:'',due:'',created:Date.now()-86400000*5,doneAt:Date.now()-86400000},
+    {id:7,title:'行政庶務確認',cat:4,pri:'low',done:false,note:'',due:'',created:Date.now()}
+  ];save();}
+}
+function save(){
+  const data=JSON.stringify(tasks);
+  if(window.electronStorage){window.electronStorage.save(data);return;}
+  try{localStorage.setItem(KEY,data);}catch(e){}
+}
+function nextId(){return Math.max(0,...tasks.map(t=>t.id))+1;}
+function fmtToday(){const d=new Date();return d.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});}
+function fmtDate(ts){if(!ts)return'';return new Date(ts).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'});}
+
+function addTask(){
+  const v=document.getElementById('new-task').value.trim();if(!v)return;
+  tasks.unshift({id:nextId(),title:v,cat:+document.getElementById('new-cat').value,pri:document.getElementById('new-pri').value,done:false,note:'',due:'',created:Date.now()});
+  document.getElementById('new-task').value='';save();render();
+}
+
+function toggleDone(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  t.done=!t.done;t.doneAt=t.done?Date.now():null;save();syncTask(t);render();
+}
+
+function openEdit(id){
+  editId=id;const t=tasks.find(x=>x.id===id);
+  document.getElementById('e-title').value=t.title;
+  document.getElementById('e-note').value=t.note||'';
+  document.getElementById('e-due').value=t.due||'';
+  document.getElementById('e-cat').value=t.cat;
+  document.getElementById('e-pri').value=t.pri;
+  document.getElementById('modal-bg').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');editId=null;}
+function saveEdit(){
+  const t=tasks.find(x=>x.id===editId);if(!t)return;
+  t.title=document.getElementById('e-title').value.trim()||t.title;
+  t.note=document.getElementById('e-note').value;
+  t.due=document.getElementById('e-due').value;
+  t.cat=+document.getElementById('e-cat').value;
+  t.pri=document.getElementById('e-pri').value;
+  closeModal();save();syncTask(t);render();
+}
+function deleteTask(){if(confirm('確定要刪除這個事項嗎？'))tasks=tasks.filter(x=>x.id!==editId);closeModal();save();render();}
+function quickDelete(id){if(confirm('確定要刪除這個事項嗎？')){tasks=tasks.filter(x=>x.id!==id);save();deleteTaskDB(id);render();}}
+
+function taskHTML(t,showDoneAt){
+  const c=CATS[t.cat];const p=PRIS[t.pri];
+  const due=t.due?'<span class="tdate">'+t.due+'</span>':'';
+  const noteStr=t.note?(t.note.length>40?t.note.slice(0,40)+'…':t.note):'';
+  const note=noteStr?'<span class="tnote">'+noteStr+'</span>':'';
+  const da=(showDoneAt&&t.doneAt)?'<span class="tdate">完成於 '+fmtDate(t.doneAt)+'</span>':'';
+  const actions=!t.done
+    ?'<div class="tact-row">'
+      +'<button class="act-tag act-done" onclick="toggleDone('+t.id+')">✓ 完成</button>'
+      +'<button class="act-tag act-edit" onclick="openEdit('+t.id+')">✎ 編輯</button>'
+      +'<button class="act-tag act-del" onclick="quickDelete('+t.id+')">✕ 刪除</button>'
+      +'</div>'
+    :'';
+  return '<div class="task'+(t.done?' done-item':'')+'"><div class="tbody">'
+    +'<div class="ttitle">'+t.title+'</div>'
+    +'<div class="tmeta">'
+      +'<span class="tag '+c.cls+'">'+c.n+'</span>'
+      +'<span class="tag '+p.cls+'">'+p.l+'優先</span>'
+      +due+note+da
+    +'</div>'
+    +actions
+    +'</div></div>';
+}
+
+function buildFilter(id,active,fn,isDone){
+  const subset=tasks.filter(t=>isDone?t.done:!t.done);
+  const counts={0:subset.length};
+  Object.keys(CATS).forEach(k=>counts[k]=subset.filter(t=>t.cat===+k).length);
+  let h=`<button class="fb${active===0?' active':''}" onclick="${fn}(0)">全部 (${counts[0]})</button>`;
+  Object.entries(CATS).forEach(([k,v])=>{h+=`<button class="fb${active===+k?' active':''}" onclick="${fn}(${k})">${v.n} (${counts[k]||0})</button>`;});
+  document.getElementById(id).innerHTML=h;
+}
+
+function setTF(v){tf=v;renderTodo();}
+function setDF(v){df=v;renderDone();}
+
+function renderTodo(){
+  buildFilter('todo-filter',tf,'setTF',false);
+  const sortVal=document.getElementById('sort-select')?document.getElementById('sort-select').value:'pri';
+  let list=tasks.filter(t=>!t.done&&(tf===0||t.cat===tf));
+  if(sortVal==='pri') list.sort((a,b)=>PRI_ORDER[a.pri]-PRI_ORDER[b.pri]||b.created-a.created);
+  else if(sortVal==='due') list.sort((a,b)=>{
+    if(!a.due&&!b.due)return 0;
+    if(!a.due)return 1;
+    if(!b.due)return -1;
+    return a.due.localeCompare(b.due);
+  });
+  else if(sortVal==='created') list.sort((a,b)=>b.created-a.created);
+  document.getElementById('todo-list').innerHTML=list.length?list.map(t=>taskHTML(t,false)).join(''):'<div class="empty">沒有待辦事項 👍</div>';
+}
+function renderDone(){
+  buildFilter('done-filter',df,'setDF',true);
+  const list=tasks.filter(t=>t.done&&(df===0||t.cat===df)).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  document.getElementById('done-list').innerHTML=list.length?list.map(t=>taskHTML(t,true)).join(''):'<div class="empty">尚無已完成事項</div>';
+}
+function renderProgress(){
+  const bars=Object.entries(CATS).map(([k,v])=>{
+    const all=tasks.filter(t=>t.cat===+k);
+    const done=all.filter(t=>t.done);
+    const pct=all.length?Math.round(done.length/all.length*100):0;
+    const pending=all.filter(t=>!t.done);
+    const pendingList=pending.slice(0,3).map(t=>`• ${t.title}`).join('<br>');
+    const more=pending.length>3?`<br>… 還有 ${pending.length-3} 項待辦`:'';
+    return`<div class="prog-item">
+      <div class="prog-top"><span class="prog-name">${v.n}</span><span class="prog-pct">${done.length}/${all.length} 已完成（${pct}%）</span></div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${v.color}"></div></div>
+      ${pending.length?`<div class="prog-detail">${pendingList}${more}</div>`:'<div class="prog-detail">✓ 全部完成</div>'}
+    </div>`;
+  }).join('');
+  document.getElementById('prog-bars').innerHTML=bars;
+  const recent=tasks.filter(t=>t.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0)).slice(0,8);
+  document.getElementById('prog-recent').innerHTML=recent.length?recent.map(t=>taskHTML(t,true)).join(''):'<div class="empty">尚無完成記錄</div>';
+}
+function updateStats(){
+  const todo=tasks.filter(t=>!t.done).length;
+  const done=tasks.filter(t=>t.done).length;
+  const rate=tasks.length?Math.round(done/tasks.length*100):0;
+  document.getElementById('s-todo').textContent=todo;
+  document.getElementById('s-done').textContent=done;
+  document.getElementById('s-rate').textContent=rate+'%';
+}
+function render(){updateStats();if(activeTab==='todo')renderTodo();else if(activeTab==='done')renderDone();else renderProgress();}
+function switchTab(name){
+  activeTab=name;
+  document.querySelectorAll('.tab').forEach((b,i)=>{b.classList.toggle('active',['todo','done','progress'][i]===name);});
+  document.getElementById('tab-todo').style.display=name==='todo'?'':'none';
+  document.getElementById('tab-done').style.display=name==='done'?'':'none';
+  document.getElementById('tab-progress').style.display=name==='progress'?'':'none';
+  render();
+}
+document.getElementById('hdate').textContent=fmtToday();
+document.getElementById('modal-bg').addEventListener('click',e=>{if(e.target.id==='modal-bg')closeModal();});
+load();
+</script>
+<div class="lock-screen" id="lock-screen">
+  <div class="lock-box">
+    <h2>治理長工作管理</h2>
+    <p>請輸入密碼</p>
+    <input type="password" id="lock-input" placeholder="••••" maxlength="20" onkeydown="if(event.key==='Enter')unlock()"/>
+    <button onclick="unlock()">進入</button>
+    <div class="lock-error" id="lock-error"></div>
+  </div>
+</div>
+<script>
+if(sessionStorage.getItem('unlocked')==='1'){
+  document.getElementById('lock-screen').style.display='none';
+}
+setTimeout(function(){document.getElementById('lock-input').focus();},100);
+</script>
+</body>
+</html>

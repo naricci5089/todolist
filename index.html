@@ -234,7 +234,7 @@ const CATS={1:{n:'組織治理',cls:'cat1',color:'#534AB7'},2:{n:'主管招募',
 const PRIS={high:{l:'高',cls:'ph'},med:{l:'中',cls:'pm'},low:{l:'低',cls:'pl'}};
 const PRI_ORDER={high:0,med:1,low:2};
 let tasks=[];let editId=null;let tf=0;let df=0;let activeTab='todo';
-const KEY='gov_tasks_v1';
+const KEY='gov_tasks_v1';const PWD='1225';function unlock(){const v=document.getElementById('lock-input').value;if(v===PWD){sessionStorage.setItem('unlocked','1');document.getElementById('lock-screen').style.display='none';}else{document.getElementById('lock-error').textContent='密碼錯誤，請再試一次';document.getElementById('lock-input').value='';}}if(sessionStorage.getItem('unlocked')==='1'){document.getElementById('lock-screen').style.display='none';}
 
 function load(){
   sb.from('tasks').select('*').order('created',{ascending:false}).then(({data,error})=>{
@@ -450,4 +450,4 @@ load();
 </div>
 
 
-</body></html>
+const KEY='gov_tasks_v1';const PWD='1225';function unlock(){const v=document.getElementById('lock-input').value;if(v===PWD){sessionStorage.setItem('unlocked','1');document.getElementById('lock-screen').style.display='none';}else{document.getElementById('lock-error').textContent='密碼錯誤，請再試一次';document.getElementById('lock-input').value='';}}if(sessionStorage.getItem('unlocked')==='1'){document.getElementById('lock-screen').style.display='none';}</html>

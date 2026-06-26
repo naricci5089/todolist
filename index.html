@@ -250,7 +250,7 @@ function resetAndReload(){
   load();
 }
 function load(){
-  if(window.electronStorage){
+  ifif(false&&window.electronStorage){
     window.electronStorage.load().then(d=>{
       try{if(d)tasks=JSON.parse(d);}catch(e){tasks=[];}
       initDefault();render();

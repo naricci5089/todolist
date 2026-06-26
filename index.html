@@ -246,6 +246,7 @@ const KEY='gov_tasks_v1';
 
 function resetAndReload(){
   try{localStorage.removeItem(KEY);}catch(e){}
+  alert('sb='+( sb?'OK':'NULL')+' supabase='+( typeof window.supabase));
   load();
 }
 function load(){

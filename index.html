@@ -131,7 +131,6 @@ select:focus{border-color:var(--border2)}
       <div>
         <h1>治理長工作管理</h1>
         <div class="header-date" id="hdate"></div>
-      <button onclick="resetAndReload()" style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border);border-radius:6px;background:none;color:var(--text3);cursor:pointer;font-family:inherit">重新同步</button>
       </div>
       <div class="stats">
         <div class="stat"><div class="stat-n" id="s-todo">0</div><div class="stat-l">待辦</div></div>
@@ -223,19 +222,12 @@ select:focus{border-color:var(--border2)}
 <script>
 const _SB_URL='https://ackiccmveetozvsxdgds.supabase.co';
 const _SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFja2ljY212ZWV0b3p2c3hkZ2RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NzY1NTQsImV4cCI6MjA5NzM1MjU1NH0.eYcFO-efp6NjXSSiFx7PbtQtZyQ45kIdGW1hdKSiyPc';
-const sb=window.supabase?window.supabase.createClient(_SB_URL,_SB_KEY):null;
-
-// Password
+const sb=(typeof window!=='undefined'&&window.supabase)?window.supabase.createClient(_SB_URL,_SB_KEY):null;
 const PWD='1225';
 function unlock(){
   var v=document.getElementById('lock-input').value;
-  if(v===PWD){
-    sessionStorage.setItem('unlocked','1');
-    document.getElementById('lock-screen').style.display='none';
-  }else{
-    document.getElementById('lock-error').textContent='密碼錯誤，請再試一次';
-    document.getElementById('lock-input').value='';
-  }
+  if(v===PWD){sessionStorage.setItem('unlocked','1');document.getElementById('lock-screen').style.display='none';}
+  else{document.getElementById('lock-error').textContent='密碼錯誤，請再試一次';document.getElementById('lock-input').value='';}
 }
 
 const CATS={1:{n:'組織治理',cls:'cat1',color:'#534AB7'},2:{n:'主管招募',cls:'cat2',color:'#1D9E75'},3:{n:'策略專案',cls:'cat3',color:'#BA7517'},4:{n:'其他事項',cls:'cat4',color:'#888780'}};
@@ -244,13 +236,8 @@ const PRI_ORDER={high:0,med:1,low:2};
 let tasks=[];let editId=null;let tf=0;let df=0;let activeTab='todo';
 const KEY='gov_tasks_v1';
 
-function resetAndReload(){
-  try{localStorage.removeItem(KEY);}catch(e){}
-  alert('sb='+( sb?'OK':'NULL')+' supabase='+( typeof window.supabase));
-  load();
-}
 function load(){
-  ifif(window.electronStorage){
+  if(window.electronStorage){
     window.electronStorage.load().then(d=>{
       try{if(d)tasks=JSON.parse(d);}catch(e){tasks=[];}
       initDefault();render();
@@ -420,7 +407,7 @@ load();
 if(sessionStorage.getItem('unlocked')==='1'){
   document.getElementById('lock-screen').style.display='none';
 }
-setTimeout(function(){document.getElementById('lock-input').focus();},100);
+setTimeout(function(){var el=document.getElementById('lock-input');if(el)el.focus();},100);
 </script>
 </body>
 </html>

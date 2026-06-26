@@ -131,6 +131,7 @@ select:focus{border-color:var(--border2)}
       <div>
         <h1>治理長工作管理</h1>
         <div class="header-date" id="hdate"></div>
+      <button onclick="resetAndReload()" style="font-size:11px;padding:3px 8px;border:0.5px solid var(--border);border-radius:6px;background:none;color:var(--text3);cursor:pointer;font-family:inherit">重新同步</button>
       </div>
       <div class="stats">
         <div class="stat"><div class="stat-n" id="s-todo">0</div><div class="stat-l">待辦</div></div>
@@ -243,6 +244,10 @@ const PRI_ORDER={high:0,med:1,low:2};
 let tasks=[];let editId=null;let tf=0;let df=0;let activeTab='todo';
 const KEY='gov_tasks_v1';
 
+function resetAndReload(){
+  try{localStorage.removeItem(KEY);}catch(e){}
+  load();
+}
 function load(){
   if(window.electronStorage){
     window.electronStorage.load().then(d=>{
